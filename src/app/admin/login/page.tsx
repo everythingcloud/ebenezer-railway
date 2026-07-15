@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { signIn, auth } from "@/auth";
 import { redirect } from "next/navigation";
 
@@ -10,7 +11,14 @@ export default async function AdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-primary-dark px-6">
       <div className="w-full max-w-sm rounded-xl border border-white/10 bg-white p-8 text-center shadow-xl">
-        <p className="font-serif text-xl font-semibold text-primary">
+        <Image
+          src="/logo.png"
+          alt="Ebenezer Baptist Church logo"
+          width={64}
+          height={64}
+          className="mx-auto rounded-md"
+        />
+        <p className="mt-4 font-serif text-xl font-semibold text-primary">
           Ebenezer Baptist Church
         </p>
         <p className="mt-1 text-sm text-muted">Admin Portal</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 
 const aboutLinks = [
@@ -24,12 +25,21 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex flex-col leading-tight">
-          <span className="font-serif text-xl font-semibold text-primary">
-            Ebenezer Baptist Church
-          </span>
-          <span className="text-xs tracking-wide text-muted uppercase">
-            Newton Heath, Manchester
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            src="/logo.png"
+            alt="Ebenezer Baptist Church logo"
+            width={44}
+            height={44}
+            className="rounded-md"
+          />
+          <span className="flex flex-col leading-tight">
+            <span className="font-serif text-xl font-semibold text-primary">
+              Ebenezer Baptist Church
+            </span>
+            <span className="text-xs tracking-wide text-muted uppercase">
+              Newton Heath, Manchester
+            </span>
           </span>
         </Link>
 

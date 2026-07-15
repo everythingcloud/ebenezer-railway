@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/container";
 
 export function SiteFooter() {
@@ -6,9 +7,18 @@ export function SiteFooter() {
     <footer className="mt-24 border-t border-border bg-primary-dark text-white/90">
       <Container className="grid gap-10 py-14 md:grid-cols-3">
         <div>
-          <p className="font-serif text-lg font-semibold text-white">
-            Ebenezer Baptist Church
-          </p>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo.png"
+              alt="Ebenezer Baptist Church logo"
+              width={48}
+              height={48}
+              className="rounded-md"
+            />
+            <p className="font-serif text-lg font-semibold text-white">
+              Ebenezer Baptist Church
+            </p>
+          </div>
           <p className="mt-3 text-sm text-white/70">
             Linwood Street, Newton Heath, Manchester, M40 1EZ
           </p>
