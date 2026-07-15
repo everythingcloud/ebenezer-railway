@@ -16,14 +16,20 @@ portal for managing announcements and blog posts.
   in one place.
 - **Fonts:** Playfair Display (serif, headings) + Inter (sans, body), loaded
   via `next/font/google` in [src/app/layout.tsx](src/app/layout.tsx).
-- **Database:** SQLite for local dev (`./dev.db`, gitignored), via Prisma 7.
+- **Database:** Postgres via Neon (provisioned through Vercel's Storage tab),
+  same database for local dev and production. Via Prisma 7.
   **Prisma 7's client generator requires an explicit driver adapter** — there
-  is no more "just pass a connection string" default. See
-  [src/lib/prisma.ts](src/lib/prisma.ts): it uses
-  `@prisma/adapter-better-sqlite3` and manually resolves the relative
-  `DATABASE_URL` against the project root (the Prisma CLI and the Node
-  runtime resolve relative `file:` paths differently otherwise — this bit us
-  during setup, see the comment in that file).
+  is no more "just pass a connection string" default — and as of Prisma 7,
+  `url`/`directUrl` are **no longer valid fields in the `datasource` block**
+  of `schema.prisma` (they error at generate/migrate time now). Connection
+  strings live in two places instead:
+  - `prisma.config.ts` → `datasource.url`, read from `DATABASE_URL_UNPOOLED`
+    — used by the CLI (`migrate`, `generate`) for direct, non-pooled access.
+  - [src/lib/prisma.ts](src/lib/prisma.ts) → the `PrismaPg` adapter, built
+    from `DATABASE_URL` (the pooled/pgbouncer connection) — used by the
+    running app.
+  Don't try to put a URL back in `schema.prisma`'s `datasource` block; Prisma
+  7 will reject it.
 - **Auth:** Auth.js / next-auth v5 (beta channel, but the App Router
   integration — `auth()`, Server Actions for sign-in/out — is the reason to
   prefer it over v4 here). Google OAuth only. Sign-in is gated to an
@@ -105,28 +111,30 @@ church's real site:
 
 ```bash
 npm install
-cp .env.example .env   # then fill in AUTH_GOOGLE_ID/SECRET, ADMIN_EMAILS
+cp .env.example .env   # fill in DATABASE_URL(_UNPOOLED), AUTH_GOOGLE_ID/SECRET, ADMIN_EMAILS
 npx prisma migrate dev
 npm run dev
 ```
 
-## Path to production
+Local dev talks to the same Neon database as production (there's no local
+Postgres install) — fine for a small church site with one admin, but be
+aware test data you create locally is visible in production too.
 
-1. **Google OAuth credentials**: create an OAuth Client ID in Google Cloud
-   Console (APIs & Services → Credentials), authorized redirect URI
-   `https://yourdomain.com/api/auth/callback/google` (and a `localhost:3000`
-   one for local dev). Put the values in `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET`.
-2. **Database**: SQLite is a local-dev convenience — it won't survive
-   serverless deploys (no persistent disk). Before deploying, provision a
-   Postgres database (Supabase free tier is a good fit given the earlier
-   "Google Workspace login only" decision) and:
-   - change `datasource db { provider = "sqlite" }` to `"postgresql"` in
-     `prisma/schema.prisma`,
-   - swap the adapter in `src/lib/prisma.ts` from
-     `@prisma/adapter-better-sqlite3` to `@prisma/adapter-pg`,
-   - set `DATABASE_URL` to the Postgres connection string,
-   - run `npx prisma migrate deploy`.
-3. **AUTH_SECRET**: generate a fresh one for production
-   (`openssl rand -base64 32`) — don't reuse the local dev one.
-4. **Deploy**: Vercel is the path of least resistance for Next.js. Push to
-   GitHub, import the repo in Vercel, set the env vars above.
+## Deploying to Vercel
+
+1. Import the repo (Bitbucket) at vercel.com/new.
+2. Storage tab → Create Database → Postgres (Neon-backed). Vercel
+   auto-injects `DATABASE_URL` / `DATABASE_URL_UNPOOLED` into all
+   environments — no manual copying needed for the deployed app.
+3. Set the remaining env vars in Project Settings → Environment Variables:
+   `AUTH_SECRET` (generate a **fresh** one for prod —
+   `openssl rand -base64 32`, don't reuse the local dev value),
+   `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `ADMIN_EMAILS`.
+4. Once Vercel gives you the deployment domain, add
+   `https://<that-domain>/api/auth/callback/google` to the OAuth Client's
+   authorized redirect URIs in Google Cloud Console — otherwise Google will
+   refuse the redirect after login.
+5. `npx prisma migrate deploy` runs against the same Neon database used
+   locally, so schema changes made locally are already live — no separate
+   production migration step needed unless you deliberately split
+   dev/prod databases later (e.g. a Neon branch).

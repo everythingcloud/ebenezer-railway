@@ -32,20 +32,29 @@ explicit **driver adapter** — `new PrismaClient()` with no args is a type
 error. See [src/lib/prisma.ts](../../../src/lib/prisma.ts). Don't "fix" that
 file by removing the adapter.
 
-## The SQLite path gotcha
+## The datasource-url gotcha
 
-Prisma's CLI (`migrate`, `generate`) resolves a relative `file:` URL in
-`DATABASE_URL` relative to **the project root** (where `prisma.config.ts`
-lives) — not relative to `prisma/schema.prisma`'s folder, despite that
-being the more common assumption. `src/lib/prisma.ts` replicates that same
-resolution manually for the Node runtime, because Node's own relative-path
-resolution (`process.cwd()`) only matches by coincidence when Next.js is
-run from the project root. If you ever see "table does not exist" errors
-after touching `DATABASE_URL` or the adapter, check this resolution logic
-before assuming the migration didn't run — it's very easy to end up with
-two divergent `dev.db` files (one at the project root, one somewhere else)
-because `better-sqlite3` silently creates an empty file at whatever path
-it's given.
+Prisma 7 **removed `url` and `directUrl` from the `datasource` block** in
+`schema.prisma` — putting them back in (e.g. `url = env("DATABASE_URL")`)
+fails at `generate`/`migrate` time with "no longer supported in schema
+files". Connection strings now live in two separate places, matching two
+separate connections against Neon:
+
+- [prisma.config.ts](../../../prisma.config.ts) → `datasource.url`, set from
+  `DATABASE_URL_UNPOOLED` — this is what the CLI (`migrate dev`,
+  `migrate deploy`, `generate`) uses, and it needs the **direct** (non
+  pgbouncer) connection string.
+- [src/lib/prisma.ts](../../../src/lib/prisma.ts) → the `PrismaPg` adapter,
+  built from `DATABASE_URL` — this is what the **running app** uses, and it
+  should be the **pooled** connection string.
+
+If you ever see odd connection/advisory-lock errors from `prisma migrate`,
+check you didn't accidentally point `prisma.config.ts` at the pooled URL —
+migrations want the direct one.
+
+Also: local dev and production currently point at the **same** Neon
+database (there's no separate local Postgres). Don't assume test data
+created locally is isolated from what a real admin sees in production.
 
 ## Adding a new admin-editable content type
 
