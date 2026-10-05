@@ -13,6 +13,7 @@ export const {
   signOut,
 } = NextAuth({
   providers: [Google],
+  trustHost: true, // behind Railway proxy
   pages: {
     signIn: "/admin/login",
   },
@@ -26,3 +27,5 @@ export const {
     },
   },
 });
+
+

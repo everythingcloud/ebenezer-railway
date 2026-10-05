@@ -34,3 +34,11 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Deploying on Railway
+
+1. New Project ? Deploy from GitHub repo (Railway auto-detects Next.js; uses `npm run build` / `npm start`).
+2. Add variables from `.env.example`: `DATABASE_URL` (keep your Neon URL, or add a Railway Postgres plugin and reference `${{Postgres.DATABASE_URL}}`), `AUTH_SECRET`, `AUTH_URL` (your Railway/custom domain), `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `ADMIN_EMAILS`.
+3. Settings ? Networking ? Generate Domain (or add a custom domain).
+4. In Google Cloud Console add `https://<domain>/api/auth/callback/google` as a redirect URI.
+5. If using a new database, run `npx prisma migrate deploy` once (e.g. `railway run npx prisma migrate deploy`).

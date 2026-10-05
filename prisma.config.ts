@@ -11,6 +11,8 @@ export default defineConfig({
   datasource: {
     // Migrations need a direct (non-pooled) connection; the running app
     // uses the pooled DATABASE_URL via the adapter in src/lib/prisma.ts.
-    url: process.env["DATABASE_URL_UNPOOLED"],
+    // Hosts without a separate direct URL (e.g. IONOS) just set DATABASE_URL.
+    url: process.env["DATABASE_URL_UNPOOLED"] ?? process.env["DATABASE_URL"],
   },
 });
+
