@@ -42,3 +42,19 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 3. Settings ? Networking ? Generate Domain (or add a custom domain).
 4. In Google Cloud Console add `https://<domain>/api/auth/callback/google` as a redirect URI.
 5. If using a new database, run `npx prisma migrate deploy` once (e.g. `railway run npx prisma migrate deploy`).
+
+## Deploying on Google Cloud Run
+
+Stays within the free tier at church-site traffic (keep Neon as the database).
+
+1. Sign in at console.cloud.google.com with your Google account, create a project and enable billing.
+2. Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install), then `gcloud auth login` and `gcloud config set project <PROJECT_ID>`.
+3. Enable APIs: `gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com`
+4. From the repo root (uses the `Dockerfile`):
+   ```
+   gcloud run deploy ebenezer --source . --region us-central1 --allow-unauthenticated --min-instances 0 --max-instances 2 --memory 512Mi --set-env-vars "DATABASE_URL=...,AUTH_SECRET=...,AUTH_URL=https://<service-url>,AUTH_GOOGLE_ID=...,AUTH_GOOGLE_SECRET=...,ADMIN_EMAILS=a@x.com"
+   ```
+   Values containing commas need a `--env-vars-file` (YAML) instead.
+5. Set `AUTH_URL` to the service URL printed at the end (or your mapped custom domain) and redeploy with `gcloud run services update ebenezer --update-env-vars AUTH_URL=...`.
+6. Add `https://<service-url>/api/auth/callback/google` as a redirect URI in Google Cloud Console ? Credentials.
+7. Optional: Billing ? Budgets & alerts, set a 񊳫 alert. Custom domain: Cloud Run ? Manage custom domains.
