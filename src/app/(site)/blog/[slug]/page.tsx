@@ -13,6 +13,8 @@ export async function generateMetadata({
   return { title: post?.title ?? "Blog" };
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogPostPage({
   params,
 }: {
